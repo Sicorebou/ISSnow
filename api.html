@@ -9,6 +9,7 @@
 
     <script type="text/javascript">
         var request= new XMLHttpRequest();
+        var country=new XMLHttpRequest();
         var mymap = L.map('map');
         var lat="";
         var long="";
@@ -22,26 +23,42 @@
             lat=result['iss_position']['latitude'];
             long=result['iss_position']['longitude'];
             console.log(lat+","+long);
+
+            //国情報を取得
+            country.open('GET',' https://geocode.maps.co/reverse?lat='+lat+'&lon='+long);
+            country.responseType='json';
+            country.onload=function(){
+                var rc=this.response;
+                if(rc['display_name']==undefined){
+                    console.log('国情報がありません');
+                }else{
+                console.log(rc['display_name']);
+                }
+        };
+
+        country.send();
+
+            //マップ視点移動
+            mymap.setView([lat,long], 4);
+            //マーカー表示
+            var marker = L.marker([lat,long]).addTo(mymap);
+            marker.bindPopup("ISS current location");
+
         };
 
         request.send();
 
+        //典拠
         L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
         attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">国土地理院</a>'
         }).addTo(mymap);
         
-        //console.log(lat);
-        mymap.setView([lat,long], 5);
-
-        //マーカー表示
-        var marker = L.marker([lat,long]).addTo(mymap);
-        marker.bindPopup("ISS current location");
-
-        //１分ごとに自動更新
-        var timer=60*1000;
+        //15sごとに自動更新
+        var timer =15*1000;
         window.addEventListener('load',function(){
         setInterval('location.reload()',timer);
         });
     </script>
      </head>
+    <div id="location"></div>
 </html>
